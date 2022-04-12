@@ -1,0 +1,196 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+	Les Livres
+{% endblock %}
+
+{% block javascripts %}
+	{# <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> #}
+	<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+	<script src="{{ asset('js/homePage.js')}}"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
+	<script>
+		$(function () {
+$('.selectpicker').selectpicker();
+});
+	</script>
+	<script>
+		function on(book_id) {
+document.getElementById("bookId").value = book_id;
+console.log(document.getElementById("bookId").value);
+document.getElementById("overlay").style.display = "block";
+}
+
+function off() {
+document.getElementById("overlay").style.display = "none";
+}
+	</script>
+	<script type="text/javascript">
+		$(document).ready(function () {
+$('#books').DataTable({
+pageLength: 5,
+language: {
+processing: "Traitement en cours...",
+search: "Rechercher&nbsp;:",
+lengthMenu: "Afficher _MENU_ &eacute;l&eacute;ments",
+info: "Affichage de l'&eacute;lement _START_ &agrave; _END_ sur _TOTAL_ &eacute;l&eacute;ments",
+infoEmpty: "Affichage de l'&eacute;lement 0 &agrave; 0 sur 0 &eacute;l&eacute;ments",
+infoFiltered: "(filtr&eacute; de _MAX_ &eacute;l&eacute;ments au total)",
+infoPostFix: "",
+loadingRecords: "Chargement en cours...",
+zeroRecords: "Aucun &eacute;l&eacute;ment &agrave; afficher",
+emptyTable: "Aucune donnée disponible dans le tableau",
+paginate: {
+first: "Premier",
+previous: "Pr&eacute;c&eacute;dent",
+next: "Suivant",
+last: "Dernier"
+},
+aria: {
+sortAscending: ": activer pour trier la colonne par ordre croissant",
+sortDescending: ": activer pour trier la colonne par ordre décroissant"
+}
+}
+});
+});
+	</script>
+{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css" rel="stylesheet"/>
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+	<link rel="stylesheet" href="{{ asset('CSS/homepage.css')}}">
+
+{% endblock %}
+
+
+{% block main %}
+	<main class="col-10 p-0 m-0 ">
+		<section class="px-5 book-list">
+			<div class="text-align-center mx-5 mt-5 mb-3">
+				{% for message in app.flashes('success') %}
+					<div class="alert alert-success">
+						{{ message }}
+					</div>
+				{% endfor %}
+				{% for message in app.flashes('danger') %}
+					<div class="alert alert-danger">
+						{{ message }}
+					</div>
+				{% endfor %}
+				<h1>Les Livres</h1>
+			</div>
+			<div class="separateur bg-green mb-5"></div>
+			<table id="books" class="table responsive">
+				<thead class="table-yellow">
+					<tr>
+						<th scope="col">
+							Image
+						</th>
+						<th scope="col">
+							Titre
+						</th>
+						<th scope="col">
+							Auteur
+						</th>
+						<th scope="col">
+							Disponibilité
+						</th>
+						<th scope="col">
+							Emprunteur
+						</th>
+						<th scope="col">
+							Catégorie
+						</th>
+						<th scope="col"></th>
+						<th scope="col"></th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for book in books %}
+						<tr>
+							<td scope="row">
+								<img src="{{ book.getImageName() }}" class="book_img"/>
+							</td>
+							<td>
+								{{ book.getTitle() }}
+							</td>
+							<td>
+								{{ book.getAuthor() }}
+							</td>
+							<td>
+								{% if (book.getStatus()) %}
+									Disponible
+								{% else %}
+									Indisponible
+								{% endif %}
+							</td>
+							<td>
+								{% if (book.getStatus()) %}
+
+									{% else %}
+										Nom de l'enprunteur
+								{% endif %}
+							</td>
+							<td>
+								{{ book.getCategory() }}
+							</td>
+							<td>
+								<a href="home/detail/{{ book.getId() }}" class="btn btn-yellow">
+									Détail
+								</a>
+							</td>
+							<td>
+								{% if (book.getStatus()) %}
+									{# a changer avec l'emprunteur dans history#}
+									<button class="btn btn-red" onclick="on({{ book.getId() }})">Emprunter</button>
+								{% else %}
+									<a href="home/return/{{ book.getId() }}" class="btn btn-green">
+										Rendre
+									</a>
+								{% endif %}
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+			<div class="my-3" id="button_livres">
+				<a href="{{ path('book_create') }}" class="btn btn-yellow" id="button_livres">
+					Ajouter un livre
+				</a>
+			</div>
+			<div id="overlay">
+				<div id="overlayContent" class="d-flex justify-content-center align-content-center flex-wrap">
+					<div class="col-8 bg-white p-5">
+						<form action="/library/public/home/borrow" method="get">
+							<div class=" form-group">
+								<input name="bookId" type="text" class="form-control" id="bookId" hidden>
+							</div>
+							<div class="form-group row">
+								<label for="select_user" class="col-sm-2 form-control-label">Emprunteur</label>
+								<div class="col-sm-10">
+									<select name="userId" class="form-control selectpicker" id="select_user" data-live-search="true">
+										{% for user in users %}
+											<option data-tokens="{{user.id}} {{user.firstName}} {{user.lastName}}" value="{{ user.id }}">{{ user.id }}
+												{{ user.firstName }}
+												{{ user.lastName }}</option>
+										{% endfor %}
+									</select>
+								</div>
+							</div>
+							<button type="submit" class="btn btn-green m-4">Submit</button>
+						</form>
+						<button onclick="off()" class="btn btn-red m-4">Fermer</button>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+{% endblock %}
+{% block footer %}
+	{{ parent()}}
+{% endblock %}
